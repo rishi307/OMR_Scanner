@@ -8,6 +8,7 @@ import imutils
 import argparse
 import pytesseract as tesseract
 from PIL import Image
+import sys
 
 def trans_OMR(img1, img2):
     '''
@@ -152,8 +153,8 @@ def bubble_check(warped,bubbled_response):
         bubbled_response.append(bubbled[1])
     return bubbled_response
 
-def main():
-    img1 = cv2.imread('omr_scanner.jpg',0)
+def main(input_image='omr_scanner.jpg'):
+    img1 = cv2.imread(input_image,0)
     img2 = cv2.imread('omr_sheet.jpg',0)
 
     # Obtain transforms
@@ -175,15 +176,21 @@ def main():
             print (str(i+1)+":  D")
         else:
             print (str(i+1)+": You have Not Marked Anything")
-
+'''
+Removed Tesseract portion
     (thresh,detl_roi) = cv2.threshold(detl_roi, 128, 255 ,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     cv2.imshow('test1',detl_roi)
     cv2.waitKey(0)
     tess_in = Image.fromarray(detl_roi)
     print (tess_in)
-    tess_in.save('detailed_ROI.jpg')
-    text=tesseract.image_to_string(Image.open('detailed_ROI.jpg'))
+    tess_in.save('detailed_ROI.tiff')
+    text=tesseract.image_to_string(Image.open('detailed_ROI.tiff'))
     print (text)
-
+'''
 if __name__=='__main__':
-    main()
+    if len(sys.argv)==2:
+        main(sys.argv[1])
+    if len(sys.argv)==1:
+        main()
+    else:
+        print ("Number of arguments is at max 1")

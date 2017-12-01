@@ -25,24 +25,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
         echo "Updating homebrew..."
         brew doctor
 
-        # Ensure the Homebrew cache directory exists
-        mkdir ~/Library/Caches/Homebrew
-
-        # Install leptonica with TIFF support (and every other format, just in case)
-        echo "Installing leptonica..."
-        brew install --with-libtiff --with-openjpeg --with-giflib leptonica
-
-        # Install Ghostscript
-        echo "Installing ghostscript..."
-        brew install gs
-
-        # Install ImageMagick with TIFF and Ghostscript support
-        echo "Installing imagemagick..."
-        brew install --with-libtiff --with-ghostscript imagemagick
-
-        # Install Tesseract devel with all languages
+        # Install Tesseract devel with English
         echo "Installing tesseract..."
-        brew install tesseract --all-languages
+        brew install tesseract 
 else
         # Unknown.
         echo "This script supports only POSIX, LINUX, MacOS"
