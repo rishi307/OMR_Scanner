@@ -48,7 +48,8 @@ def trans_OMR(img1, img2):
     else:
         print "Not enough matches are found - %d/%d" % (len(good), MIN_MATCH_COUNT)
         matchesMask = None
-    
+
+    print ("Extracted transform")
     cv2.namedWindow('Trans', cv2.WINDOW_NORMAL)
     cv2.imshow('Trans', dst)
     cv2.waitKey(0)
@@ -81,6 +82,8 @@ def roi_extractor(img):
     else:
         ans1_roi=img[ac1[1]+7:ac1[1]+ac1[3]-7,ac1[0]+7:ac1[0]+ac1[2]-7]
         ans2_roi=img[ac2[1]+7:ac2[1]+ac2[3]-7,ac2[0]+7:ac2[0]+ac2[2]-7]
+
+    print ("Extracted Region of Interest")
     cv2.namedWindow('ROI',cv2.WINDOW_NORMAL)
     cv2.imshow('ROI',temp)
     cv2.waitKey(0)
@@ -88,6 +91,7 @@ def roi_extractor(img):
 
 def bubble_check(warped,bubbled_response):
     thresh = cv2.threshold(warped, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    print ("Displaying Threshold Map")
     cv2.namedWindow('thresh', cv2.WINDOW_NORMAL)
     cv2.imshow('thresh', thresh)
     cv2.waitKey(0)
@@ -96,7 +100,7 @@ def bubble_check(warped,bubbled_response):
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[1]
     questionCnts = []
-    
+
     # loop over the contours
     for c in cnts:
     	# compute the bounding box of the contour, then use the
@@ -110,7 +114,7 @@ def bubble_check(warped,bubbled_response):
     		questionCnts.append(c)
             # sort the question contours top-to-bottom, then initialize
     # the total number of correct answers
-    questionCnts = contours.sort_contours(questionCnts, method="top-to-bottom")[0]    
+    questionCnts = contours.sort_contours(questionCnts, method="top-to-bottom")[0]
     # each question has 4 possible answers, to loop over the
     # question in batches of 4
     for (q, i) in enumerate(np.arange(0, len(questionCnts), 4)):
@@ -145,36 +149,41 @@ def bubble_check(warped,bubbled_response):
 
         if bubbled[0] < 0.5:
             bubbled = (bubbled[0], 5)
-        bubbled_response.append(bubbled[1]) 
+        bubbled_response.append(bubbled[1])
     return bubbled_response
 
-img1 = cv2.imread('omr_sc2.jpg',0)
-img2 = cv2.imread('omr_sheet.jpg',0)
+def main():
+    img1 = cv2.imread('omr_scanner.jpg',0)
+    img2 = cv2.imread('omr_sheet.jpg',0)
 
-trans_img = trans_OMR(img1,img2)
-detl_roi, ans1_roi, ans2_roi = roi_extractor(trans_img)
-bubbled = []
-bubbled = bubble_check(ans1_roi,bubbled)
-bubbled = bubble_check(ans2_roi,bubbled)
-print ("Your Responses: ")
-for i,b in enumerate(bubbled):
-    if b == 1:
-        print str(i+1)+":  A"
-    elif b == 2:
-        print str(i+1)+":  B"
-    elif b == 3:
-        print str(i+1)+":  C"
-    elif b == 4:
-        print str(i+1)+":  D"
-    else:
-        print str(i+1)+": You have Not Marked Anything"
+    # Obtain transforms
+    trans_img = trans_OMR(img1,img2)
+    #
+    detl_roi, ans1_roi, ans2_roi = roi_extractor(trans_img)
+    bubbled = []
+    bubbled = bubble_check(ans1_roi,bubbled)
+    bubbled = bubble_check(ans2_roi,bubbled)
+    print ("\n\n\nYour Responses: ")
+    for i,b in enumerate(bubbled):
+        if b == 1:
+            print (str(i+1)+":  A")
+        elif b == 2:
+            print (str(i+1)+":  B")
+        elif b == 3:
+            print (str(i+1)+":  C")
+        elif b == 4:
+            print (str(i+1)+":  D")
+        else:
+            print (str(i+1)+": You have Not Marked Anything")
 
-_,detl_roi = cv2.threshold(detl_roi, 120, 255 ,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-detl_roi=cv2.medianBlur(detl_roi,3)
-detl_roi = cv2.cvtColor(detl_roi, cv2.COLOR_GRAY2BGR)
-cv2.imshow('test',detl_roi)
-cv2.waitKey(0)
-b,g,r = cv2.split(detl_roi)
-detl_roi = cv2.merge((r,g,b))
-tess_in = Image.fromarray(detl_roi)
-text=tesseract.image_to_string(tess_in)
+    (thresh,detl_roi) = cv2.threshold(detl_roi, 128, 255 ,cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    cv2.imshow('test1',detl_roi)
+    cv2.waitKey(0)
+    tess_in = Image.fromarray(detl_roi)
+    print (tess_in)
+    tess_in.save('detailed_ROI.jpg')
+    text=tesseract.image_to_string(Image.open('detailed_ROI.jpg'))
+    print (text)
+
+if __name__=='__main__':
+    main()
